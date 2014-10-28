@@ -54,8 +54,27 @@ class LineFinder:
 				
 				lines = cv2.HoughLines(edges,1,np.pi/180,60)
 				print lines
+				holderList = []
+				line1 = []
+				line2 = []
+				theta1 = 0
+				theta2 = 0
 				if lines != None:
 					for rho,theta in lines[0]:
+						holderList.append(theta)
+						diff = abs(holderList[0] - theta)
+						if diff < .2:
+							line1.append([rho,theta])
+						else:
+							line2.append([rho,theta])
+					for rho,theta in line1:
+						theta1 += theta
+					for rho,theta in line2:
+						theta2 += theta
+					line1avg = theta1/len(line1)
+					line2avg = theta2/len(line2)
+					lines = [line1avg,line2avg]
+					for theta in lines:
 						a = np.cos(theta)
 						b = np.sin(theta)
 						x0 = a*rho
