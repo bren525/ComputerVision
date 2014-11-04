@@ -11,14 +11,15 @@ class LineFinder:
 		rospy.init_node('line_finder', anonymous = True)
 		rospy.image_sub = rospy.Subscriber("/camera/image_raw", Image, self.update_image)
 		self.bridge = CvBridge()
-		self.image = None
+		#self.image = None
 		#self.found_lines = np.zeros((480, 640,3), np.uint8)
-		#self.image = cv2.imread("test.png")
+		self.image = cv2.imread("StopSign16in.png")
 
 	def update_image(self,msg):
 		try:
-			self.image = self.bridge.imgmsg_to_cv2(msg,"bgr8")
-			cv2.imwrite("capture.png", self.image)
+			#self.image = self.bridge.imgmsg_to_cv2(msg,"bgr8")
+			#cv2.imwrite("capture.png", self.image)
+			self.image = cv2.imread("StopSign16in.png")
 			pass
 		except CvBridgeError, e:
 			print e
@@ -60,8 +61,8 @@ class LineFinder:
 
 
 				# RED STOP SIGN
-				lower = np.array([0,135,60])
-				upper = np.array([15,255,200])
+				lower = np.array([0,230,90])
+				upper = np.array([12,255,150])
 
 				#Green tape range [35,50,0] to [50,255,255]
 
@@ -73,9 +74,22 @@ class LineFinder:
 				#cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
 				cv2.drawContours(frame,contour,-1,(0,255,0))
 
+				#create the rectangle around the stop sign
+				x,y,w,h = cv2.boundingRect(contour)
+				box = cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
+				#extract rectangle width
+				width = w
+
+				#draw Rectangle
+				cv2.drawContours(frame,[box],0,(0,0,255),2)
+
+				print "width:",width
+
 				cv2.imshow("CAM",frame)
 				cv2.imshow("mask",mask)
-				
+
+
+
 				cv2.waitKey(50)
 				r.sleep()
 
