@@ -22,9 +22,12 @@ class LineFinder:
 			pass
 		except CvBridgeError, e:
 			print e
+
+	def two_cluster_lines(self, data):
+		pass
 	
 	def run(self):
-		r=rospy.Rate(1)
+		r=rospy.Rate(5)
 		while not rospy.is_shutdown():
 			if self.image != None:
 				frame = self.image
