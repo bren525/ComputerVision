@@ -9,7 +9,7 @@ from sensor_msgs.msg import Image
 class LineFinder:
 	def __init__(self):
 		rospy.init_node('line_finder', anonymous = True)
-		rospy.image_sub = rospy.Subscriber("/camera/image_raw", Image, self.update_image)
+		#rospy.image_sub = rospy.Subscriber("/camera/image_raw", Image, self.update_image)
 		self.bridge = CvBridge()
 		self.image = None
 		#self.found_lines = np.zeros((480, 640,3), np.uint8)
@@ -17,7 +17,8 @@ class LineFinder:
 
 	def update_image(self,msg):
 		try:
-			self.image = self.bridge.imgmsg_to_cv2(msg,"bgr8")
+			#self.image = self.bridge.imgmsg_to_cv2(msg,"bgr8")
+			self.image=open("NormalView.png")
 			pass
 		except CvBridgeError, e:
 			print e
@@ -54,26 +55,26 @@ class LineFinder:
 				
 				lines = cv2.HoughLines(edges,1,np.pi/180,60)
 				print lines
-				holderList = []
-				line1 = []
-				line2 = []
-				theta1 = 0
-				theta2 = 0
+				#holderList = []
+				#line1 = []
+				#line2 = []
+				#theta1 = 0
+				#theta2 = 0
 				if lines != None:
-					for rho,theta in lines[0]:
-						holderList.append(theta)
-						diff = abs(holderList[0] - theta)
-						if diff < .2:
-							line1.append([rho,theta])
-						else:
-							line2.append([rho,theta])
-					for rho,theta in line1:
-						theta1 += theta
-					for rho,theta in line2:
-						theta2 += theta
-					line1avg = theta1/len(line1)
-					line2avg = theta2/len(line2)
-					lines = [line1avg,line2avg]
+					#for rho,theta in lines[0]:
+					#	holderList.append(theta)
+					#	diff = abs(holderList[0] - theta)
+					#	if diff < .2:
+					#		line1.append([rho,theta])
+					#	else:
+					#		line2.append([rho,theta])
+					#for rho,theta in line1:
+					#	theta1 += theta
+					#for rho,theta in line2:
+					#	theta2 += theta
+					#line1avg = theta1/len(line1)
+					#line2avg = theta2/len(line2)
+					#lines = [line1avg,line2avg]
 					for theta in lines:
 						a = np.cos(theta)
 						b = np.sin(theta)
