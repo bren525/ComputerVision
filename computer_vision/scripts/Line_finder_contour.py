@@ -15,6 +15,7 @@ class LineFinder:
 		self.bridge = CvBridge()
 		self.image = None
 		self.cmd = Twist()
+		self.stop = False
 
 		self.top_cutoff = .9
 
@@ -58,6 +59,36 @@ class LineFinder:
 				lower = np.array([0,0,220])
 				upper = np.array([150,150,255])
 
+				# GREEN STOP SIGN Threshholds in HSV
+				stop_lower = np.array([30,130,120])
+				stop_upper = np.array([75,200,210])
+				#Green Stop Sign Mask
+				stop_mask = cv2.inRange(hsv, lower, upper)
+				stop_contours, stop_heiarchy = cv2.findContours(mask,1,2)
+
+				if(len(stop_contours) > 0 and self.stop != True):
+					#we assume the largest contour by area is the one we want
+					stop_contour = max(stop_contours, key = lambda x:cv2.contourArea(x))
+					#define the rectangle around contour
+					x,y,w,h = cv2.boundingRect(stop_contour)
+					box = cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
+					#Draw Rectangle
+					cv2.drawContours(frame,[box],0,(0,0,255),2)
+					#IMPORTANT!!! THE NEXT 3 LINES ARE FOR TESTING ONLY!!
+					#COMMENT OUT FOR CONTEST!!!
+					cv2.imshow("CAM",frame)
+					cv2.imshow("mask",mask)
+					cv2.waitKey(2000)
+
+					#Calculate the Distance in inches
+					distance_in = (w - 528.0)/-15.0
+					distance_m = distance_in*0.0254
+					if(abs(distance_m - 0.4218)< 0.0254):
+						self.cmd = Twist()
+						self.stop = True
+						print "stop command sent"
+
+
 				mask = cv2.inRange(frame, lower, upper)
 
 				top = mask[:int(len(mask)*self.top_cutoff),:]
@@ -79,7 +110,7 @@ class LineFinder:
 				t_contours, t_heiarchy = cv2.findContours(top,1,2)
 				#print map(lambda x:cv2.contourArea(x),t_contours)
 
-				if len(t_contours) > 0:
+				if len(t_contours) > 0  and self.stop != True:
 					t_contour = max(t_contours, key = lambda x:cv2.contourArea(x))
 					cv2.drawContours(frame,t_contour,-1,(255,0,0))
 					M = cv2.moments(t_contour)
@@ -94,7 +125,7 @@ class LineFinder:
 
 				contours, heiarchy = cv2.findContours(bottom,1,2)
 
-				if len(contours) > 0:
+				if len(contours) > 0  and self.stop != True:
 					contour = max(contours, key = lambda x:cv2.contourArea(x))
 					#print map(lambda x:cv2.contourArea(x),contours)
 					#print str(cv2.contourArea(contour))
