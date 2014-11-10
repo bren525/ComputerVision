@@ -17,11 +17,12 @@ class LineFinder:
 		self.cmd = Twist()
 
 		self.top_cutoff = .9
+		self.future = 0;
 
 
 
 		#self.found_lines = np.zeros((480, 640,3), np.uint8)
-		self.image = cv2.imread("StopSign16in.png")
+		self.image = None
 
 	def update_image(self,msg):
 		try:
@@ -34,7 +35,7 @@ class LineFinder:
 		if event == cv2.EVENT_LBUTTONDOWN:
 			#print self.image[y][x]
 			hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
-			#print hsv[y][x]
+			print hsv[y][x]
 
 	def follow_line(self):
 		if self.image != None:
@@ -47,18 +48,19 @@ class LineFinder:
 
 				
 				#RED MASKING TAPE HSV
-				lower = np.array([172,100,150])
-				upper = np.array([180,255,255])
+				lower1 = np.array([172,100,150])
+				upper1 = np.array([180,255,255])
+
+				mask1 = cv2.inRange(hsv, lower1, upper1)
 
 				lower2 = np.array([-1,100,150])
 				upper2 = np.array([5,255,255])
+				
 				mask2 = cv2.inRange(hsv, lower2, upper2)
 
-				#BGR
-				lower = np.array([0,0,220])
-				upper = np.array([150,150,255])
+				
 
-				mask = cv2.inRange(frame, lower, upper)
+				mask = cv2.add(mask1,mask2)
 
 				top = mask[:int(len(mask)*self.top_cutoff),:]
 				
@@ -79,47 +81,53 @@ class LineFinder:
 				t_contours, t_heiarchy = cv2.findContours(top,1,2)
 				#print map(lambda x:cv2.contourArea(x),t_contours)
 
+				center =  len(frame[0])/2
+
 				if len(t_contours) > 0:
 					t_contour = max(t_contours, key = lambda x:cv2.contourArea(x))
 					cv2.drawContours(frame,t_contour,-1,(255,0,0))
-					M = cv2.moments(t_contour)
-					if M['m00'] == 0:
-						cx = 0
-						cy = 0
-						print "WARNING: m00 == 0"
+					Mt = cv2.moments(t_contour)
+					if Mt['m00'] == 0:
+						cxt = len(frame[0])/2
+						cyt = 0
+						#print "WARNING: m00 == 0"
 					else:
-						cx = int(M['m10']/M['m00'])
-						cy = int(M['m01']/M['m00'])
-					cv2.circle(frame,(cx,cy),2,(0,0,255))
+						cxt = int(Mt['m10']/Mt['m00'])
+						cyt = int(Mt['m01']/Mt['m00'])
+					cv2.circle(frame,(cxt,cyt),2,(0,255,0))
+					self.future = center-cxt
+
+				
+
+				
 
 				contours, heiarchy = cv2.findContours(bottom,1,2)
+				
 
-				if len(contours) > 0:
-					contour = max(contours, key = lambda x:cv2.contourArea(x))
+				if len(contours) > 0 and cv2.contourArea(contour):
+					contour = max(contours, key = lambda x:cv2.contourArea(x))					
 					#print map(lambda x:cv2.contourArea(x),contours)
-					#print str(cv2.contourArea(contour))
+					print str(cv2.contourArea(contour))
 					cv2.drawContours(frame,contour,-1,(255,0,0), offset = (0,int(len(frame)*self.top_cutoff)))
 
 					M = cv2.moments(contour)
 					if M['m00'] == 0:
-						cx = 0
+						cx = width = len(frame[0])/2
 						cy = 0
-						print "WARNING: m00 == 0"
+						#print "WARNING: m00 == 0"
 					else:
 						cx = int(M['m10']/M['m00'])
 						cy = int(M['m01']/M['m00'])
 
-					cv2.circle(frame,(cx,cy + int(len(frame)*self.top_cutoff)),2,(0,0,255))
-
-					width = len(frame[0])
-					center =  width/2
+					cv2.circle(frame,(cx,cy + int(len(frame)*self.top_cutoff)),2,(0,255,0))
 
 					ang_vel = .002 * (center-cx)
 					lin_vel = ((2**2) - (ang_vel)**2)**(.5)
 
 					self.cmd = Twist(linear = Vector3(x=.1),angular = Vector3(z=ang_vel))
 				else:
-					self.cmd = Twist()
+					ang_vel = .005* self.future
+					self.cmd = Twist(angular = Vector3(z=ang_vel))
 				cv2.imshow("CAM",frame)
 
 	def run(self):
@@ -130,6 +138,7 @@ class LineFinder:
 		while not rospy.is_shutdown():
 				self.follow_line()
 
+				self.cmd_vel.publish(self.cmd)
 				cv2.waitKey(50)
 				r.sleep()
 
