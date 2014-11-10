@@ -19,20 +19,20 @@ class LineFinder:
 		self.top_cutoff = .9
 
 
+
 		#self.found_lines = np.zeros((480, 640,3), np.uint8)
-		#self.image = cv2.imread("test.png")
+		self.image = cv2.imread("StopSign16in.png")
 
 	def update_image(self,msg):
 		try:
 			self.image = self.bridge.imgmsg_to_cv2(msg,"bgr8")
-			cv2.imwrite("capture.png", self.image)
 			pass
 		except CvBridgeError, e:
 			print e
 	
 	def on_mouse(self,event,x,y,flag,param):
 		if event == cv2.EVENT_LBUTTONDOWN:
-			print self.image[y][x]
+			#print self.image[y][x]
 			hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
 			#print hsv[y][x]
 
@@ -72,9 +72,9 @@ class LineFinder:
 					else:
 						return [0,0,0]
 
-				mask = np.array(map(lambda x:map(is_red,x),frame))
+				#mask = np.array(map(lambda x:map(is_red,x),frame))
 
-				cv2.imshow("mask",mask)
+				#cv2.imshow("mask",mask)
 
 				t_contours, t_heiarchy = cv2.findContours(top,1,2)
 				#print map(lambda x:cv2.contourArea(x),t_contours)
@@ -129,23 +129,6 @@ class LineFinder:
 		r=rospy.Rate(10)
 		while not rospy.is_shutdown():
 				self.follow_line()
-				'''# RED STOP SIGN
-				lower = np.array([0,135,60])
-				upper = np.array([15,255,200])
-
-				#Green tape range [35,50,0] to [50,255,255]
-
-				# Threshold the HSV image to get only blue colors
-				mask = cv2.inRange(hsv, lower, upper)
-
-				contours, heiarchy = cv2.findContours(mask,1,2)
-				contour = contours[0] 
-				#cv2.line(frame,(x1,y1),(x2,y2),(0,0,255),2)
-				cv2.drawContours(frame,contour,-1,(0,255,0))'''
-
-				
-				
-				#self.cmd_vel.publish(self.cmd)
 
 				cv2.waitKey(50)
 				r.sleep()
