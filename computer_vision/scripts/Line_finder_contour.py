@@ -21,7 +21,6 @@ class LineFinder:
 
 		self.top_cutoff = .9
 		self.future = 0;
-
 		self.odom = (0,0)
 		self.odom_zero = None
 
@@ -72,7 +71,8 @@ class LineFinder:
 				#Green Stop Sign Mask
 				stop_mask = cv2.inRange(hsv, stop_lower, stop_upper)
 				stop_contours, stop_heiarchy = cv2.findContours(stop_mask,1,2)
-
+				
+				#if the stop command has already been sent, check to see if we've travelled far enough to stop
 				if(self.odom_zero != None):
 					dist = ((self.odom_zero[0][0] - self.odom[0])**2 + (self.odom_zero[0][1] - self.odom[1])**2)**(.5) 
 					print dist, self.odom_zero[1]
@@ -89,13 +89,14 @@ class LineFinder:
 					box = cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
 					#Draw Rectangle
 					cv2.drawContours(frame,[box],0,(0,0,255),2)
-					#IMPORTANT!!! THE NEXT 3 LINES ARE FOR TESTING ONLY!!
-					#COMMENT OUT FOR CONTEST!!!
+
 
 					#Calculate the Distance in inches
 					distance_in = (w - 528.0)/-15.0
+					#oops lets convert to meters for odom
 					distance_m = distance_in*0.0254
 					
+					#if we're a certain distance away, warn the odom
 					if(abs(distance_m - 0.4218)< 0.0254):
 						print "self.odom:", self.odom
 						self.odom_zero = (self.odom, .15*distance_m)
