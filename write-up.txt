@@ -4,6 +4,8 @@ Computer Vision: Competitive Line-Following
 David Elkan
 Brendan Caporaletti
 
+Final code in computer_vision/scripts/Line_finder_contour.py
+
 We had a lot of fun with our competition. The goal of the project was to follow a line around a track and 
 then stop perfectly at a stop sign. More importantly we had to be fast, to beat the other team. Overall we 
 split up the problem into the two tasks, however because they relied on similar components we were able to 
