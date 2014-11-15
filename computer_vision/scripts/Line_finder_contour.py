@@ -52,6 +52,7 @@ class LineFinder:
 
 				# Convert BGR to HSV
 				hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+				
 				#RED MASKING TAPE HSV
 				lower1 = np.array([172,100,100])
 				upper1 = np.array([180,255,255])
@@ -62,7 +63,8 @@ class LineFinder:
 				upper2 = np.array([13,255,255])
 				
 				mask2 = cv2.inRange(hsv, lower2, upper2)
-
+				
+				#Combine the two red filtering masks because RED wraps the hue space (172 to 13)
 				mask = cv2.add(mask1,mask2)
 
 				# GREEN STOP SIGN Threshholds in HSV
@@ -103,53 +105,18 @@ class LineFinder:
 						print distance_m
 						print "stopping..."
 
-
-				top = mask[:int(len(mask)*self.top_cutoff),:]
-				
+				#Only look at bottom 10% of image
 				bottom = mask[int(len(mask)*self.top_cutoff):,:]
-
-				def is_red(bgr):
-					return bgr
-					if bgr[2] > 150 and bgr[1]<150 and bgr[0]<150:
-						print bgr
-						return bgr
-					else:
-						return [0,0,0]
-
-				#mask = np.array(map(lambda x:map(is_red,x),frame))
-
-				#cv2.imshow("mask",mask)
-
-				t_contours, t_heiarchy = cv2.findContours(top,1,2)
-				#print map(lambda x:cv2.contourArea(x),t_contours)
-
-				center =  len(frame[0])/2
-
-				if len(t_contours) > 0  and self.stop != True:
-					t_contour = max(t_contours, key = lambda x:cv2.contourArea(x))
-					if cv2.contourArea(t_contour) > 1000:
-						cv2.drawContours(frame,t_contour,-1,(255,0,0))
-						Mt = cv2.moments(t_contour)
-						if Mt['m00'] == 0:
-							cxt = len(frame[0])/2
-							cyt = 0
-							#print "WARNING: m00 == 0"
-						else:
-							cxt = int(Mt['m10']/Mt['m00'])
-							cyt = int(Mt['m01']/Mt['m00'])
-						cv2.circle(frame,(cxt,cyt),2,(0,255,0))
-						self.future = center-cxt
-
 				
+				#Grab the contours of our image
 				contours, heiarchy = cv2.findContours(bottom,1,2)
 
 				if len(contours) > 0  and self.stop != True:
-					contour = max(contours, key = lambda x:cv2.contourArea(x))
-					if cv2.contourArea(contour) > 1000:
-						#print map(lambda x:cv2.contourArea(x),contours)
-						#print str(cv2.contourArea(contour))
+					contour = max(contours, key = lambda x:cv2.contourArea(x)) #Select the largest contour
+					if cv2.contourArea(contour) > 1000: #Make sure the largest contour is somewhat large
 						cv2.drawContours(frame,contour,-1,(255,0,0), offset = (0,int(len(frame)*self.top_cutoff)))
-
+						
+						#Find centroid of contour
 						M = cv2.moments(contour)
 						if M['m00'] == 0:
 							cx = width = len(frame[0])/2
@@ -160,28 +127,26 @@ class LineFinder:
 							cy = int(M['m01']/M['m00'])
 
 						cv2.circle(frame,(cx,cy + int(len(frame)*self.top_cutoff)),2,(0,255,0))
-
+						
+						#Set the future offset in case we lose sight of line
 						self.future = center-cx
-						if center-cx == 0:
-							ang_vel=0
-							lin_vel = .5
-						else:
-							ang_vel = .003 * (center-cx)
-							#lin_vel = .08/abs(ang_vel)
-							#ang_vel = .05 * abs(center-cx)**(1.0/2) * ((center-cx)/abs(center-cx))
-							#lin_vel = .12/abs(ang_vel)
-							lin_vel = .5
-							#ang_vel = .02 * abs(center-cx)**(1.0/2) * ((center-cx)/abs(center-cx))
-							#lin_vel = .08/abs(ang_vel)
-						#print ang_vel, lin_vel
+						
+						#Tuned proportionality constant for staying on the line
+						ang_vel = .003 * (center-cx)
+						
+						#Maximum linear velocity
+						lin_vel = .5
+
 						
 						self.cmd = Twist(linear = Vector3(x=lin_vel),angular = Vector3(z=ang_vel))
 
 				elif self.stop != True:
 					if self.future != 0:
+						#Assume we're making a tight turn, turn as fast as possible!
 						ang_vel = 2.5 * (self.future/abs(self.future))
 						self.cmd = Twist(linear = Vector3(x=.5),angular = Vector3(z=ang_vel))
 					else:
+						#We've reached a dead end
 						self.cmd = Twist()
 				cv2.imshow("CAM",frame)
 
