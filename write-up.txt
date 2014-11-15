@@ -1,0 +1,18 @@
+
+Computer Vision: Competitive Line-Following
+
+David Elkan
+Brendan Caporaletti
+
+We had a lot of fun with our competition. The goal of the project was to follow a line around a track and then stop perfectly at a stop sign. More importantly we had to be fast, to beat the other team. Overall we split up the problem into the two tasks, however because they relied on similar components we were able to combine them into the same runtime loop.
+
+Our primary method for control involved contour mapping.  We defined HSV ranges that matched our two relevant targets - the green stop sign and the red tape.  We selected contour mapping because it was extremely simple and quick to get working - all we had to do was determine the HSV ranges of the objects we wished to track and create the relevant image masks.
+
+In order to follow the line we had the robot only pay attention to the lower part of the image so it would not be distracted by contours further out that should not yet influence its driving decisions. The contour mapping is used to isolate the red tape which we then calculate the centroid of.  This centroid was used as the main indicator for directional commands.  If the robot did not see any red contours it would travel in the direction that it last detected red contours until it finds the line once more. At this point our line following was functional and it was time to “make go fast”. Our initial strategy was to balance our linear and angular velocities, when making tighter turns we should slow down. However, through experimentation we found that we could get better times by simply maxing out our linear speed and turning faster when we reach tight turns. We did see some overshoot in some cases but, overall it made our running time faster and was therefore our final strategy.
+
+The stop sign presented another challenge and resulted in a key, though perhaps not optimal, design decision.  Because of the poor range of vision of our cameras it was not possible to have the stop sign in view at the time when the robot needed to stop.  We ended up tackling this problem by developing a simple formula that calculated the distance to the stop sign based on with the width of the observed contour.  It then used the odom data to wait until the robot had travelled the correct distance to give a stop command.  This proved however to be fairly inconsistent and we sometimes overshot the stop zone.  One likely problem was the delay in camera feedback, which could cause the stop command to be send late.  Another potential issue was the inconsistency of the stop sign contour mapping, which may have returned inaccurate distances.
+
+If we were to redo this project we would likely not rely so heavily on contour mapping.  Variances in lighting conditions and camera conditions rendered our robot lost and confused. We would also like to address the inconsistent camera lag issue, slight communication lag would cause oversteering affectionately referred to as “waggling”. We would have also liked to test our strategy on a new course to see if we over optimized for our practice course.
+
+
+
