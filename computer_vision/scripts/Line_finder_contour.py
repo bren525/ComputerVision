@@ -23,10 +23,7 @@ class LineFinder:
 		self.future = 0;
 		self.odom = (0,0)
 		self.odom_zero = None
-
-
-
-		#self.found_lines = np.zeros((480, 640,3), np.uint8)
+		
 		self.image = None
 
 	def update_image(self,msg):
@@ -43,9 +40,10 @@ class LineFinder:
 		if event == cv2.EVENT_LBUTTONDOWN:
 			#print self.image[y][x]
 			hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
-			print hsv[y][x]
+			print hsv[y][x] #Super useful for color calibrating
 
 	def follow_line(self):
+		'''Main logic that guides line following and stopping at teh stop sign'''
 		if self.image != None:
 				frame = self.image.copy()
 				#cv2.imshow("CAM",frame)	
